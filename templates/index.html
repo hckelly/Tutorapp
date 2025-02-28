@@ -99,6 +99,7 @@
 
     <script>
         let ttsEnabled = true;
+        const apiBaseURL = "https://ai-tutor-bpp0.onrender.com"; // ✅ Correctly using Render URL
 
         function toggleTTS() {
             ttsEnabled = !ttsEnabled;
@@ -114,7 +115,7 @@
                 return;
             }
 
-            fetch("http://127.0.0.1:5000/setup", {
+            fetch(`${apiBaseURL}/setup`, {  // ✅ Using Render API
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ response_style: responseStyle, initial_text: initialText })
@@ -142,7 +143,7 @@
 
             displayMessage("student", userInput);
 
-            fetch("http://127.0.0.1:5000/ask", {
+            fetch(`${apiBaseURL}/ask`, {  // ✅ Using Render API
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ question: userInput })
@@ -175,7 +176,7 @@
         function speakText(text) {
             const voice = "alloy"; // ✅ Choose from 'alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'
 
-            fetch("http://127.0.0.1:5000/speak", {
+            fetch(`${apiBaseURL}/speak`, {  // ✅ Using Render API
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ text: text, voice: voice }) 
