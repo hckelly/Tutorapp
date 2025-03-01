@@ -18,7 +18,7 @@ is_setup_complete = False  # Prevent student questions before setup
 
 @app.route("/setup", methods=["POST"])
 def setup_tutor():
-    """Receives tutor behavior and initial conversation text from the instructor."""
+    """88Receives tutor behavior and initial conversation text from the instructor."""
     global conversation_history, response_style, initial_text, is_setup_complete
     
     data = request.get_json()
