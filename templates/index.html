@@ -52,7 +52,6 @@
             padding: 15px;
             background-color: white;
             border-radius: 5px;
-            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
         }
 
         .message {
@@ -77,61 +76,18 @@
 </head>
 <body>
     <h1>Interactive AI Tutor</h1>
-
-    <h2>Instructor Setup</h2>
-    <div id="instructorSetup">
-        <input type="text" id="responseStyle" placeholder="Enter tutor style (e.g., 'Socratic for beginners')"><br>
-        <input type="text" id="initialText" placeholder="Enter initial conversation text"><br>
-        <button onclick="setupTutor()">Start Tutor</button>
-        <button onclick="restartTutor()">Restart Tutor</button>
-    </div>
-
-    <hr>
-
-    <div id="studentSection">
-        <h2>Student Interaction</h2>
-        <button onclick="newSession()">New Session</button>
-        <button onclick="toggleTTS()">Toggle Voice: <span id="ttsStatus">ON</span></button>
-        <div id="chatbox"></div>
-        <textarea id="userInput" placeholder="Reply"></textarea><br>
-        <button onclick="askTutor()">Ask the Tutor</button>
-    </div>
+    <button onclick="toggleTTS()">Toggle Voice: <span id="ttsStatus">ON</span></button>
+    <div id="chatbox"></div>
+    <textarea id="userInput" placeholder="Reply"></textarea><br>
+    <button onclick="askTutor()">Ask the Tutor</button>
 
     <script>
         let ttsEnabled = true;
-        const apiBaseURL = "https://ai-tutor-bpp0.onrender.com"; // ✅ Correctly using Render URL
+        const apiBaseURL = "https://ai-tutor-bpp0.onrender.com";
 
         function toggleTTS() {
             ttsEnabled = !ttsEnabled;
             document.getElementById("ttsStatus").innerText = ttsEnabled ? "ON" : "OFF";
-        }
-
-        function setupTutor() {
-            let responseStyle = document.getElementById("responseStyle").value;
-            let initialText = document.getElementById("initialText").value;
-
-            if (!responseStyle || !initialText) {
-                alert("Please enter both the tutor style and initial text.");
-                return;
-            }
-
-            fetch(`${apiBaseURL}/setup`, {  // ✅ Using Render API
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ response_style: responseStyle, initial_text: initialText })
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById("instructorSetup").style.display = "none";
-                document.getElementById("studentSection").style.display = "block";
-
-                clearChatbox();
-                displayMessage("tutor", data.initial_text, true);
-            })
-            .catch(error => {
-                alert("Error setting up the tutor.");
-                console.error("Error:", error);
-            });
         }
 
         function askTutor() {
@@ -141,9 +97,7 @@
                 return;
             }
 
-            displayMessage("student", userInput);
-
-            fetch(`${apiBaseURL}/ask`, {  // ✅ Using Render API
+            fetch(`${apiBaseURL}/ask`, {  
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ question: userInput })
@@ -151,10 +105,6 @@
             .then(response => response.json())
             .then(data => {
                 displayMessage("tutor", data.response, true);
-            })
-            .catch(error => {
-                displayMessage("tutor", "Error: Unable to connect to the server.");
-                console.error("Error:", error);
             });
 
             document.getElementById("userInput").value = "";
@@ -174,26 +124,16 @@
         }
 
         function speakText(text) {
-            const voice = "alloy"; // ✅ Choose from 'alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'
-
-            fetch(`${apiBaseURL}/speak`, {  // ✅ Using Render API
+            fetch(`${apiBaseURL}/speak`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: text, voice: voice }) 
+                body: JSON.stringify({ text: text, voice: "alloy" })
             })
             .then(response => response.blob())
             .then(blob => {
-                const audioUrl = URL.createObjectURL(blob);
-                const audio = new Audio(audioUrl);
+                const audio = new Audio(URL.createObjectURL(blob));
                 audio.play();
-            })
-            .catch(error => {
-                console.error("Error with OpenAI TTS:", error);
             });
-        }
-
-        function clearChatbox() {
-            document.getElementById("chatbox").innerHTML = "";
         }
     </script>
 </body>
