@@ -7,7 +7,7 @@ import io
 app = Flask(__name__)
 CORS(app)
 
-# ✅ Ensure API key is loaded securely
+# ✅ Load API key securely from environment variables
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # ✅ Store tutor configuration
@@ -18,7 +18,7 @@ is_setup_complete = False  # Prevent student questions before setup
 
 @app.route("/setup", methods=["POST"])
 def setup_tutor():
-    """88Receives tutor behavior and initial conversation text from the instructor."""
+    """Receives tutor behavior and initial conversation text from the instructor."""
     global conversation_history, response_style, initial_text, is_setup_complete
     
     data = request.get_json()
@@ -42,11 +42,11 @@ def setup_tutor():
     return jsonify({"response": "Tutor setup successful!", "response_style": response_style, "initial_text": initial_text})
 
 def ask_chatgpt(conversation):
-    """Sends conversation history to OpenAI API and returns a response."""
+    """Sends conversation history to OpenAI API and returns a response using GPT-4."""
     try:
         client = openai.OpenAI()
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4",  # ✅ Always use GPT-4
             messages=conversation
         )
         return response.choices[0].message.content
@@ -71,7 +71,7 @@ def ask():
         # ✅ Add student's question to conversation history
         conversation_history.append({"role": "user", "content": question})
         
-        # ✅ Get AI's response
+        # ✅ Get AI's response (Always GPT-4)
         answer = ask_chatgpt(conversation_history)
         
         # ✅ Add AI response to conversation history
@@ -91,7 +91,7 @@ def speak():
         voice = data.get("voice", "alloy")
 
         response = openai.audio.speech.create(
-            model="tts-1",  # ✅ Faster model
+            model="tts-1",  # ✅ Faster TTS model
             voice=voice,
             input=text,
         )
