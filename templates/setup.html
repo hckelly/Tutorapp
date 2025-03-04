@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutor Setup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            margin: 50px;
+        }
+        .container {
+            max-width: 500px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            margin: auto;
+        }
+        input, button {
+            padding: 10px;
+            margin: 10px;
+            width: 80%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Set Up Your AI Tutor</h2>
+        <label for="response_style">Tutor Style:</label>
+        <input type="text" id="response_style" placeholder="e.g., Socratic, Direct Teaching">
+        
+        <label for="initial_text">Initial Question:</label>
+        <input type="text" id="initial_text" placeholder="e.g., Solve 5x + 3 = 2x + 8">
+        
+        <button onclick="setupTutor()">Start Tutor</button>
+    </div>
+
+    <script>
+        function setupTutor() {
+            const responseStyle = document.getElementById("response_style").value;
+            const initialText = document.getElementById("initial_text").value;
+
+            fetch("/setup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ response_style: responseStyle, initial_text: initialText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.response);  
+                window.location.href = "/";  
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</body>
+</html>
