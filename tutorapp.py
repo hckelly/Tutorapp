@@ -19,8 +19,9 @@ is_setup_complete = False  # Prevent student questions before setup
 
 @app.route("/")
 def home():
-    """Serves the main HTML page."""
-    return render_template("index.html")  # ✅ Ensures index.html loads correctly
+    """Serves the main instructor setup page if the tutor has not been set up."""
+    global is_setup_complete
+    return render_template("index.html", setup_complete=is_setup_complete)  # ✅ Pass setup status to the front-end
 
 @app.route("/setup", methods=["POST"])
 def setup_tutor():
@@ -40,24 +41,12 @@ def setup_tutor():
         {"role": "assistant", "content": initial_text}
     ]
 
-    is_setup_complete = True
+    is_setup_complete = True  # ✅ Mark setup as complete
 
     # ✅ Preload a dummy TTS request to reduce cold start lag
     preload_speech("Welcome to the AI Tutor!")
 
     return jsonify({"response": "Tutor setup successful!", "response_style": response_style, "initial_text": initial_text})
-
-def ask_chatgpt(conversation):
-    """Sends conversation history to OpenAI API and returns a response using GPT-4."""
-    try:
-        client = openai.OpenAI()
-        response = client.chat.completions.create(
-            model="gpt-4",  # ✅ Always use GPT-4 for better response quality
-            messages=conversation
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        return f"Error: {str(e)}"
 
 @app.route("/ask", methods=["POST"])
 def ask():
@@ -87,6 +76,18 @@ def ask():
 
     except Exception as e:
         return jsonify({"response": f"Server Error: {str(e)}"}), 500
+
+def ask_chatgpt(conversation):
+    """Sends conversation history to OpenAI API and returns a response using GPT-4."""
+    try:
+        client = openai.OpenAI()
+        response = client.chat.completions.create(
+            model="gpt-4",  # ✅ Always use GPT-4 for better response quality
+            messages=conversation
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 @app.route("/speak", methods=["POST"])
 def speak():
