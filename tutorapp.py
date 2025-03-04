@@ -1,13 +1,14 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file
 import openai
 import os
 from flask_cors import CORS
 import io
 
-app = Flask(__name__)
+# ✅ Ensure Flask correctly finds the templates folder
+app = Flask(__name__, template_folder="templates")  
 CORS(app)
 
-# ✅ Load API key securely from environment variables
+# ✅ Securely load API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # ✅ Store tutor configuration
@@ -15,6 +16,11 @@ conversation_history = []
 response_style = ""
 initial_text = ""
 is_setup_complete = False  # Prevent student questions before setup
+
+@app.route("/")
+def home():
+    """Serves the main HTML page."""
+    return render_template("index.html")  # ✅ Ensures index.html loads correctly
 
 @app.route("/setup", methods=["POST"])
 def setup_tutor():
@@ -46,7 +52,7 @@ def ask_chatgpt(conversation):
     try:
         client = openai.OpenAI()
         response = client.chat.completions.create(
-            model="gpt-4",  # ✅ Always use GPT-4
+            model="gpt-4",  # ✅ Always use GPT-4 for better response quality
             messages=conversation
         )
         return response.choices[0].message.content
@@ -114,6 +120,7 @@ def preload_speech(text):
     except Exception as e:
         print(f"Preload failed: {e}")
 
+# ✅ Fix for Render Port Configuration
 if __name__ == "__main__":
     print("Tutor system ready. Please set up the tutor using the web interface.")
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)), debug=True)
