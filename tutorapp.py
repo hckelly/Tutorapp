@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for
+from flask import Flask, render_template, request, jsonify, send_file
 import openai
 import os
 from flask_cors import CORS
@@ -22,8 +22,8 @@ def home():
     """Redirect to setup page if the tutor has not been set up."""
     global is_setup_complete
     if not is_setup_complete:
-        return render_template("setup.html")  # ✅ Ensure instructor enters response style & initial text first
-    return render_template("index.html")  # ✅ Show student page only after setup
+        return render_template("setup.html")  # ✅ Ensure instructor enters setup first
+    return render_template("index.html")  # ✅ Show student page after setup
 
 @app.route("/setup", methods=["POST"])
 def setup_tutor():
@@ -48,7 +48,19 @@ def setup_tutor():
     # ✅ Preload a dummy TTS request to reduce cold start lag
     preload_speech("Welcome to the AI Tutor!")
 
-    return jsonify({"response": "Tutor setup successful!", "response_style": response_style, "initial_text": initial_text})
+    return jsonify({
+        "response": "Tutor setup successful!",
+        "response_style": response_style,
+        "initial_text": initial_text  # ✅ Send initial_text to frontend
+    })
+
+@app.route("/get_initial_text", methods=["GET"])
+def get_initial_text():
+    """Returns the initial text for the student page."""
+    global is_setup_complete, initial_text
+    if not is_setup_complete:
+        return jsonify({"initial_text": ""})  # ✅ Prevent showing text before setup
+    return jsonify({"initial_text": initial_text})
 
 @app.route("/ask", methods=["POST"])
 def ask():
