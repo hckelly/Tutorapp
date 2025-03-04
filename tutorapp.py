@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for
 import openai
 import os
 from flask_cors import CORS
@@ -19,9 +19,11 @@ is_setup_complete = False  # Prevent student questions before setup
 
 @app.route("/")
 def home():
-    """Serves the main instructor setup page if the tutor has not been set up."""
+    """Serves the main instructor setup page first."""
     global is_setup_complete
-    return render_template("index.html", setup_complete=is_setup_complete)  # ✅ Pass setup status to the front-end
+    if not is_setup_complete:
+        return render_template("setup.html")  # ✅ Force the setup page first
+    return render_template("index.html")  # ✅ Show the student page only after setup
 
 @app.route("/setup", methods=["POST"])
 def setup_tutor():
