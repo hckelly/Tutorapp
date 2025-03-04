@@ -19,11 +19,11 @@ is_setup_complete = False  # Prevent student questions before setup
 
 @app.route("/")
 def home():
-    """Serves the main instructor setup page first."""
+    """Redirect to setup page if the tutor has not been set up."""
     global is_setup_complete
     if not is_setup_complete:
-        return render_template("setup.html")  # ✅ Force the setup page first
-    return render_template("index.html")  # ✅ Show the student page only after setup
+        return render_template("setup.html")  # ✅ Ensure instructor enters response style & initial text first
+    return render_template("index.html")  # ✅ Show student page only after setup
 
 @app.route("/setup", methods=["POST"])
 def setup_tutor():
@@ -128,4 +128,3 @@ if __name__ == "__main__":
     print("Tutor system ready. Please set up the tutor using the web interface.")
     port = int(os.environ.get("PORT", 10000))  # ✅ Use Render's PORT dynamically
     app.run(host="0.0.0.0", port=port, debug=True)
-
