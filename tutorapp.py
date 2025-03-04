@@ -126,4 +126,6 @@ def preload_speech(text):
 # ✅ Fix for Render Port Configuration
 if __name__ == "__main__":
     print("Tutor system ready. Please set up the tutor using the web interface.")
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)), debug=True)
+    port = int(os.environ.get("PORT", 10000))  # ✅ Use Render's PORT dynamically
+    app.run(host="0.0.0.0", port=port, debug=True)
+
