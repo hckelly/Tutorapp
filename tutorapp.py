@@ -46,7 +46,7 @@ def setup_tutor():
     is_setup_complete = True  # ✅ Mark setup as complete
 
     # ✅ Preload a dummy TTS request to reduce cold start lag
-    preload_speech("Welcome to the AI Tutor!")
+    preload_speech(initial_text)
 
     return jsonify({
         "response": "Tutor setup successful!",
@@ -94,12 +94,11 @@ def ask():
 def ask_chatgpt(conversation):
     """Sends conversation history to OpenAI API and returns a response using GPT-4."""
     try:
-        client = openai.OpenAI()
-        response = client.chat.completions.create(
-            model="gpt-4",  # ✅ Always use GPT-4 for better response quality
+        response = openai.ChatCompletion.create(  # ✅ Removed invalid `proxies` argument
+            model="gpt-4",
             messages=conversation
         )
-        return response.choices[0].message.content
+        return response["choices"][0]["message"]["content"]
     except Exception as e:
         return f"Error: {str(e)}"
 
