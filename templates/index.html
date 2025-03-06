@@ -50,24 +50,6 @@
                 .catch(error => console.error("Error loading initial text:", error));
         });
 
-        function sendResponse() {
-            const studentText = document.getElementById("studentResponse").value;
-
-            fetch("/ask", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ question: studentText })
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById("tutorMessage").textContent = data.response;
-                if (voiceEnabled) {
-                    speakText(data.response);
-                }
-            })
-            .catch(error => console.error("Error:", error));
-        }
-
         function speakText(text) {
             fetch("/speak", {
                 method: "POST",
@@ -80,11 +62,6 @@
                 audio.play();
             })
             .catch(error => console.error("Error with speech synthesis:", error));
-        }
-
-        function toggleVoice() {
-            voiceEnabled = !voiceEnabled;
-            alert("Voice " + (voiceEnabled ? "enabled" : "disabled"));
         }
     </script>
 </body>

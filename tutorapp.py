@@ -3,7 +3,7 @@ import openai
 import os
 from flask_cors import CORS
 import io
-import traceback  # ✅ Added for detailed error logging
+import traceback
 
 app = Flask(__name__, template_folder="templates")  
 CORS(app)
@@ -28,7 +28,6 @@ def setup_tutor():
     global conversation_history, response_style, initial_text, is_setup_complete
     
     try:
-        # ✅ Log incoming request data
         print("📥 Incoming /setup request:", request.data)
 
         data = request.get_json()
@@ -41,15 +40,13 @@ def setup_tutor():
         if not response_style or not initial_text:
             return jsonify({"error": "Missing tutor setup fields."}), 400
 
-        # ✅ Initialize conversation history
         conversation_history = [
             {"role": "system", "content": f"You are a tutor using the {response_style} method. Guide the student accordingly."},
             {"role": "assistant", "content": initial_text}
         ]
 
-        is_setup_complete = True  # ✅ Mark setup as complete
+        is_setup_complete = True  
 
-        # ✅ Log the setup completion
         print(f"✔ Tutor setup completed: Style = {response_style}, Initial Text = {initial_text}")
 
         return jsonify({
@@ -60,15 +57,8 @@ def setup_tutor():
 
     except Exception as e:
         error_details = traceback.format_exc()
-        print(f"❌ ERROR in /setup: {error_details}")  # ✅ Print full error traceback
+        print(f"❌ ERROR in /setup: {error_details}")  
         return jsonify({"error": f"Server error: {str(e)}"}), 500
-
-@app.route("/get_initial_text", methods=["GET"])
-def get_initial_text():
-    global is_setup_complete, initial_text
-    if not is_setup_complete:
-        return jsonify({"initial_text": ""})  
-    return jsonify({"initial_text": initial_text})
 
 @app.route("/ask", methods=["POST"])
 def ask():
@@ -91,17 +81,18 @@ def ask():
 
     except Exception as e:
         error_details = traceback.format_exc()
-        print(f"❌ ERROR in /ask: {error_details}")  # ✅ Log the exact error
+        print(f"❌ ERROR in /ask: {error_details}")  
         return jsonify({"response": f"Server Error: {str(e)}"}), 500
 
 def ask_chatgpt(conversation):
     """Sends conversation history to OpenAI API and returns a response using GPT-4."""
     try:
-        response = openai.ChatCompletion.create(  
+        client = openai.OpenAI()  
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=conversation
         )
-        return response["choices"][0]["message"]["content"]
+        return response.choices[0].message.content  
     except Exception as e:
         return f"Error: {str(e)}"
 
