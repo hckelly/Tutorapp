@@ -45,8 +45,8 @@ def setup_tutor():
 
     is_setup_complete = True  # ✅ Mark setup as complete
 
-    # ✅ Preload a dummy TTS request to reduce cold start lag
-    preload_speech(initial_text)
+    # ✅ Speak the initial text immediately when student page loads
+    speak_text(initial_text)
 
     return jsonify({
         "response": "Tutor setup successful!",
@@ -94,11 +94,12 @@ def ask():
 def ask_chatgpt(conversation):
     """Sends conversation history to OpenAI API and returns a response using GPT-4."""
     try:
-        response = openai.ChatCompletion.create(  # ✅ Removed invalid `proxies` argument
+        client = openai.OpenAI()  # ✅ Correct new OpenAI v1.0+ client
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=conversation
         )
-        return response["choices"][0]["message"]["content"]
+        return response.choices[0].message.content  # ✅ Updated syntax for OpenAI v1.0+
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -123,8 +124,8 @@ def speak():
     except Exception as e:
         return jsonify({"error": f"Speech synthesis failed: {str(e)}"}), 500
 
-def preload_speech(text):
-    """Preloads a dummy speech request to reduce latency."""
+def speak_text(text):
+    """Ensures initial_text is spoken."""
     try:
         openai.audio.speech.create(
             model="tts-1",
@@ -132,7 +133,7 @@ def preload_speech(text):
             input=text,
         )
     except Exception as e:
-        print(f"Preload failed: {e}")
+        print(f"Speech synthesis failed: {e}")
 
 # ✅ Fix for Render Port Configuration
 if __name__ == "__main__":
