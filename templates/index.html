@@ -44,7 +44,7 @@
                 .then(data => {
                     if (data.initial_text) {
                         document.getElementById("tutorMessage").textContent = data.initial_text;
-                        setTimeout(() => speakText(data.initial_text), 1000);
+                        setTimeout(() => speakText(data.initial_text), 1000);  // ✅ Fixes voice on page load
                     }
                 })
                 .catch(error => console.error("Error loading initial text:", error));
@@ -66,6 +66,25 @@
                 }
             })
             .catch(error => console.error("Error:", error));
+        }
+
+        function speakText(text) {
+            fetch("/speak", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: text, voice: "alloy" })
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const audio = new Audio(URL.createObjectURL(blob));
+                audio.play();
+            })
+            .catch(error => console.error("Error with speech synthesis:", error));
+        }
+
+        function toggleVoice() {
+            voiceEnabled = !voiceEnabled;
+            alert("Voice " + (voiceEnabled ? "enabled" : "disabled"));
         }
     </script>
 </body>
