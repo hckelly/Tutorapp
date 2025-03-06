@@ -44,7 +44,7 @@
                 .then(data => {
                     if (data.initial_text) {
                         document.getElementById("tutorMessage").textContent = data.initial_text;
-                        setTimeout(() => speakText(data.initial_text), 1000);  // ✅ Fixes voice on page load
+                        setTimeout(() => speakText(data.initial_text), 1000);
                     }
                 })
                 .catch(error => console.error("Error loading initial text:", error));
