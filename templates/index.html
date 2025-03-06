@@ -29,17 +29,22 @@
 <body>
     <div class="container">
         <h2>AI Tutor Session</h2>
-        <textarea id="studentResponse" placeholder="Your response..."></textarea>
+        <p id="tutorMessage"></p>
+        <textarea id="studentResponse" placeholder="Enter your response here..."></textarea>
         <button onclick="sendResponse()">Submit</button>
+        <button onclick="toggleVoice()">Toggle Voice</button>
     </div>
 
     <script>
+        let voiceEnabled = true;
+
         document.addEventListener("DOMContentLoaded", function() {
             fetch("/get_initial_text")
                 .then(response => response.json())
                 .then(data => {
                     if (data.initial_text) {
-                        document.getElementById("studentResponse").value = data.initial_text;
+                        document.getElementById("tutorMessage").textContent = data.initial_text;
+                        speakText(data.initial_text);
                     }
                 })
                 .catch(error => console.error("Error loading initial text:", error));
@@ -54,8 +59,32 @@
                 body: JSON.stringify({ question: studentText })
             })
             .then(response => response.json())
-            .then(data => alert("AI Response: " + data.response))
+            .then(data => {
+                document.getElementById("tutorMessage").textContent = data.response;
+                if (voiceEnabled) {
+                    speakText(data.response);
+                }
+            })
             .catch(error => console.error("Error:", error));
+        }
+
+        function speakText(text) {
+            fetch("/speak", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: text, voice: "alloy" })
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const audio = new Audio(URL.createObjectURL(blob));
+                audio.play();
+            })
+            .catch(error => console.error("Error with speech synthesis:", error));
+        }
+
+        function toggleVoice() {
+            voiceEnabled = !voiceEnabled;
+            alert("Voice " + (voiceEnabled ? "enabled" : "disabled"));
         }
     </script>
 </body>
