@@ -114,7 +114,7 @@ def ask():
 def ask_chatgpt(conversation):
     """Sends conversation history to OpenAI API and returns a response using GPT-4."""
     try:
-        client = openai.OpenAI()
+        client = openai.OpenAI()  # ✅ Fix: Remove 'proxies' argument
         response = client.chat.completions.create(
             model="gpt-4",
             messages=conversation
@@ -122,6 +122,7 @@ def ask_chatgpt(conversation):
         return response.choices[0].message.content
 
     except Exception as error:
+        print(f"❌ ERROR in AI Response: {traceback.format_exc()}")
         return f"Error: {str(error)}"
 
 
@@ -143,9 +144,9 @@ def generate_speech():
             input=text
         )
 
-        # Convert to audio file format
-        audio_data = response.content
-        audio_file = io.BytesIO(audio_data)
+        # ✅ Fix: Stream the audio properly
+        audio_file = io.BytesIO(response.content)  # Read the audio stream
+        audio_file.seek(0)
         return send_file(audio_file, mimetype="audio/mpeg")
 
     except Exception as error:
