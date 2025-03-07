@@ -3,58 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Tutor</title>
+    <title>AI Tutor Session</title>
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: #e3f2fd; /* Soft blue background */
+            padding: 20px;
             text-align: center;
-            background-color: #f4f4f4;
-            margin: 50px;
         }
-        .container {
-            max-width: 500px;
+        #container {
+            max-width: 600px;
+            margin: auto;
             background: white;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            margin: auto;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
         }
         textarea, button {
+            width: 100%;
+            margin-top: 10px;
+        }
+        button {
             padding: 10px;
-            margin: 10px;
-            width: 80%;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div id="container">
         <h2>AI Tutor Session</h2>
-        <p id="tutorMessage"></p>
-        <textarea id="studentResponse" placeholder="Enter your response here..."></textarea>
+        <p id="tutorMessage"><i>Loading initial question...</i></p>
+
+        <textarea id="studentResponse" placeholder="Reply here..."></textarea>
         <button onclick="sendResponse()">Submit</button>
-        <button onclick="toggleVoice()">Toggle Voice</button>
+        <button onclick="toggleVoice()">🔊 Toggle Voice</button>
     </div>
 
     <script>
         let voiceEnabled = true;
 
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             fetch("/get_initial_text")
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error("Failed to fetch initial text.");
+                    return response.json();
+                })
                 .then(data => {
                     if (data.initial_text) {
                         document.getElementById("tutorMessage").textContent = data.initial_text;
-                        setTimeout(() => speakText(data.initial_text), 1000);
+                        console.log("🎙️ Speaking:", data.initial_text);
+                        setTimeout(() => speakText(data.initial_text), 1000); // ✅ Ensures voice starts
                     }
                 })
                 .catch(error => console.error("Error loading initial text:", error));
         });
 
+        function sendResponse() {
+            const studentText = document.getElementById("studentResponse").value.trim();
+            if (!studentText) return alert("Please enter a response!");
+
+            fetch("/ask", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ question: studentText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("tutorMessage").textContent = data.response;
+                if (voiceEnabled) {
+                    speakText(data.response);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
         function speakText(text) {
             fetch("/speak", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: text, voice: "alloy" })
+                body: JSON.stringify({ text: text, voice: "alloy" }) // Change voice here if needed
             })
             .then(response => response.blob())
             .then(blob => {
@@ -62,6 +96,11 @@
                 audio.play();
             })
             .catch(error => console.error("Error with speech synthesis:", error));
+        }
+
+        function toggleVoice() {
+            voiceEnabled = !voiceEnabled;
+            alert("Voice " + (voiceEnabled ? "enabled" : "disabled"));
         }
     </script>
 </body>
