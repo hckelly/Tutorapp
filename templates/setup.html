@@ -1,60 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tutor Setup</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f4f4f4;
-            margin: 50px;
-        }
-        .container {
-            max-width: 500px;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            margin: auto;
-        }
-        input, button {
-            padding: 10px;
-            margin: 10px;
-            width: 80%;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Instructor Setup</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding-top: 50px;
+      background-color: #f4f4f4;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 500px;
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      font-size: 16px;
+    }
+    .button-group {
+      margin-top: 15px;
+      display: flex;
+      justify-content: space-between;
+    }
+    button {
+      padding: 10px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .start-button {
+      display: block;
+      margin: 30px auto 0;
+      padding: 12px 24px;
+      font-size: 18px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Set Up Your AI Tutor</h2>
-        <label for="response_style">Tutor Style:</label>
-        <input type="text" id="response_style" placeholder="e.g., Socratic, Direct Teaching">
-        
-        <label for="initial_text">Initial Question:</label>
-        <input type="text" id="initial_text" placeholder="e.g., Solve 5x + 3 = 2x + 8">
-        
-        <button onclick="setupTutor()">Start Tutor</button>
+  <div class="container">
+    <h2>Instructor Setup</h2>
+
+    <label for="responseStyle">Response Style:</label>
+    <input type="text" id="responseStyle" placeholder="For example: A Socratic dialogue for High School students" />
+
+    <label for="initialText">Initial Prompt:</label>
+    <input type="text" id="initialText" placeholder="For example: Why doesn't the moon fall?" />
+
+    <label for="voice">Select Tutor Voice:</label>
+    <div>
+      <input type="radio" name="voice" value="shimmer" checked /> Alloy (warm, balanced)<br />
+      <input type="radio" name="voice" value="echo" /> Echo (crisp, expressive)<br />
+      <input type="radio" name="voice" value="fable" /> Fable (narrative, natural)<br />
+      <input type="radio" name="voice" value="onyx" /> Onyx (deep, resonant)<br />
+      <input type="radio" name="voice" value="nova" /> Nova (clear, articulate)<br />
+      <input type="radio" name="voice" value="shimmer" /> Shimmer (bright, lively)<br />
+      <input type="radio" name="voice" value="browser" /> Lower quality, lower latency male voice
     </div>
 
-    <script>
-        function setupTutor() {
-            const responseStyle = document.getElementById("response_style").value;
-            const initialText = document.getElementById("initial_text").value;
+    <div class="button-group">
+      <button onclick="testVoice()">Test Voice</button>
+    </div>
 
-            fetch("/setup", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ response_style: responseStyle, initial_text: initialText })
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.response);  
-                window.location.href = "/";  
-            })
-            .catch(error => console.error("Error:", error));
+    <button class="start-button" onclick="setupTutor()">Start Tutor</button>
+  </div>
+
+  <script>
+    async function testVoice() {
+      const text = document.getElementById("initialText").value.trim() || "This is a test of the selected tutor voice.";
+      const voice = document.querySelector('input[name="voice"]:checked').value;
+
+      try {
+        const res = await fetch("/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, voice })
+        });
+
+        const data = await res.json?.();
+        if (data?.message === "Use browser TTS") {
+          const utterance = new SpeechSynthesisUtterance(text);
+          speechSynthesis.speak(utterance);
+        } else if (res.ok) {
+          const audio = new Audio(URL.createObjectURL(await res.blob()));
+          audio.play();
+        } else {
+          alert("TTS error: " + (data?.message || "Unknown error"));
         }
-    </script>
+      } catch (err) {
+        alert("TTS error: " + err.message);
+      }
+    }
+
+    async function setupTutor() {
+      const responseStyle = document.getElementById("responseStyle").value.trim();
+      const initialText = document.getElementById("initialText").value.trim();
+      const voice = document.querySelector('input[name="voice"]:checked').value;
+
+      if (!responseStyle || !initialText) {
+        alert("Please fill out both fields.");
+        return;
+      }
+
+      try {
+        const res = await fetch("/setup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            response_style: responseStyle,
+            initial_text: initialText,
+            preferred_voice: voice
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = "/";
+        } else {
+          alert("Setup error: " + data.message);
+        }
+      } catch (err) {
+        alert("Setup error: " + err.message);
+      }
+    }
+  </script>
 </body>
 </html>

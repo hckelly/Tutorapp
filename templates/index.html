@@ -1,107 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Tutor Session</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #e3f2fd; /* Soft blue background */
-            padding: 20px;
-            text-align: center;
-        }
-        #container {
-            max-width: 600px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        textarea, button {
-            width: 100%;
-            margin-top: 10px;
-        }
-        button {
-            padding: 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>AI Tutor Session</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 700px;
+      margin: 2rem auto;
+      padding: 1rem;
+      background: #f4f4f4;
+    }
+    .message {
+      margin: 1rem 0;
+      padding: 1rem;
+      border-radius: 8px;
+    }
+    .user {
+      background: #d0eaff;
+      text-align: right;
+    }
+    .assistant {
+      background: #e2f7dc;
+      text-align: left;
+    }
+    #reset-button {
+      display: block;
+      margin: 2rem auto;
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      background-color: #004080;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #reset-button:hover {
+      background-color: #0059b3;
+    }
+  </style>
 </head>
 <body>
-    <div id="container">
-        <h2>AI Tutor Session</h2>
-        <p id="tutorMessage"><i>Loading initial question...</i></p>
+  <h1>AI Tutor Session</h1>
+  <div id="chatbox"></div>
 
-        <textarea id="studentResponse" placeholder="Reply here..."></textarea>
-        <button onclick="sendResponse()">Submit</button>
-        <button onclick="toggleVoice()">🔊 Toggle Voice</button>
-    </div>
+  <form id="student-form">
+    <input
+      type="text"
+      id="student-input"
+      placeholder="Type your answer..."
+      required
+      style="width: 90%; padding: 0.5rem; font-size: 1rem;" />
+    <button type="submit" style="padding: 0.5rem 1rem; font-size: 1rem;">Send</button>
+  </form>
 
-    <script>
-        let voiceEnabled = true;
+  <button id="reset-button" onclick="resetSession()">Push for Next Challenge</button>
 
-        document.addEventListener("DOMContentLoaded", function () {
-            fetch("/get_initial_text")
-                .then(response => {
-                    if (!response.ok) throw new Error("Failed to fetch initial text.");
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.initial_text) {
-                        document.getElementById("tutorMessage").textContent = data.initial_text;
-                        console.log("🎙️ Speaking:", data.initial_text);
-                        setTimeout(() => speakText(data.initial_text), 1000); // ✅ Ensures voice starts
-                    }
-                })
-                .catch(error => console.error("Error loading initial text:", error));
+  <script>
+    const chatbox = document.getElementById("chatbox");
+    const form = document.getElementById("student-form");
+    const input = document.getElementById("student-input");
+
+    function appendMessage(sender, text) {
+      const div = document.createElement("div");
+      div.className = `message ${sender}`;
+      div.textContent = text;
+      chatbox.appendChild(div);
+      chatbox.scrollTop = chatbox.scrollHeight;
+    }
+
+    async function speak(text) {
+      try {
+        const ttsRes = await fetch("/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
         });
 
-        function sendResponse() {
-            const studentText = document.getElementById("studentResponse").value.trim();
-            if (!studentText) return alert("Please enter a response!");
+        const contentType = ttsRes.headers.get("Content-Type");
 
-            fetch("/ask", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ question: studentText })
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById("tutorMessage").textContent = data.response;
-                if (voiceEnabled) {
-                    speakText(data.response);
-                }
-            })
-            .catch(error => console.error("Error:", error));
+        if (contentType === "application/json") {
+          const json = await ttsRes.json();
+          if (json.success && json.message === "Use browser TTS") {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.1;
+            speechSynthesis.speak(utterance);
+            return;
+          } else {
+            throw new Error(json.message);
+          }
         }
 
-        function speakText(text) {
-            fetch("/speak", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: text, voice: "alloy" }) // Change voice here if needed
-            })
-            .then(response => response.blob())
-            .then(blob => {
-                const audio = new Audio(URL.createObjectURL(blob));
-                audio.play();
-            })
-            .catch(error => console.error("Error with speech synthesis:", error));
-        }
+        const blob = await ttsRes.blob();
+        const audioURL = URL.createObjectURL(blob);
+        const audio = new Audio(audioURL);
+        audio.play();
+      } catch (err) {
+        console.error("TTS fallback:", err);
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.1;
+        speechSynthesis.speak(utterance);
+      }
+    }
 
-        function toggleVoice() {
-            voiceEnabled = !voiceEnabled;
-            alert("Voice " + (voiceEnabled ? "enabled" : "disabled"));
+    async function loadInitialText() {
+      const res = await fetch("/get_initial_text");
+      const data = await res.json();
+      if (data.success) {
+        appendMessage("user", data.initial_text);
+        speak(data.initial_text);
+      }
+    }
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const message = input.value.trim();
+      if (!message) return;
+
+      appendMessage("user", message);
+      input.value = "";
+
+      try {
+        const res = await fetch("/student_reply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          appendMessage("assistant", data.reply);
+          speak(data.reply);
+        } else {
+          appendMessage("assistant", "Tutor Error: " + data.message);
         }
-    </script>
+      } catch (err) {
+        appendMessage("assistant", "Tutor Error: " + err.message);
+      }
+    };
+
+    function resetSession() {
+      window.location.href = "/reset";
+    }
+
+    loadInitialText();
+  </script>
 </body>
 </html>

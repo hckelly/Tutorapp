@@ -1,1 +1,18 @@
+# Ignore environment config and secrets
 .env
+
+# Ignore Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore session data
+flask_session/
+
+# Ignore audio files
+*.mp3
+
+# Ignore OS-specific metadata (optional but common)
+.DS_Store
+Thumbs.db
