@@ -35,25 +35,32 @@
       margin-top: 5px;
       font-size: 16px;
     }
+    textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      font-size: 16px;
+      resize: vertical;
+    }
     .button-group {
-      margin-top: 15px;
       display: flex;
       justify-content: space-between;
+      margin-top: 20px;
     }
     button {
       padding: 10px 16px;
       font-size: 16px;
       cursor: pointer;
     }
-    .start-button {
-      display: block;
-      margin: 30px auto 0;
-      padding: 12px 24px;
+    #startBtn {
+      margin-top: 20px;
+      width: 100%;
       font-size: 18px;
-      background-color: #4CAF50;
+      padding: 14px;
+      background-color: #007bff;
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -62,87 +69,60 @@
     <h2>Instructor Setup</h2>
 
     <label for="responseStyle">Response Style:</label>
-    <input type="text" id="responseStyle" placeholder="For example: A Socratic dialogue for High School students" />
+    <textarea id="responseStyle" placeholder="For example: A Socratic dialogue for High School students"></textarea>
 
     <label for="initialText">Initial Prompt:</label>
     <input type="text" id="initialText" placeholder="For example: Why doesn't the moon fall?" />
 
-    <label for="voice">Select Tutor Voice:</label>
+    <label>Choose Voice:</label>
     <div>
-      <input type="radio" name="voice" value="shimmer" checked /> Alloy (warm, balanced)<br />
-      <input type="radio" name="voice" value="echo" /> Echo (crisp, expressive)<br />
-      <input type="radio" name="voice" value="fable" /> Fable (narrative, natural)<br />
-      <input type="radio" name="voice" value="onyx" /> Onyx (deep, resonant)<br />
-      <input type="radio" name="voice" value="nova" /> Nova (clear, articulate)<br />
-      <input type="radio" name="voice" value="shimmer" /> Shimmer (bright, lively)<br />
-      <input type="radio" name="voice" value="browser" /> Lower quality, lower latency male voice
+      <label><input type="radio" name="voice" value="browser" checked /> Lower latency browser voice</label><br/>
+      <label><input type="radio" name="voice" value="shimmer" /> Shimmer (OpenAI)</label><br/>
+      <label><input type="radio" name="voice" value="alloy" /> Alloy (OpenAI)</label><br/>
+      <label><input type="radio" name="voice" value="echo" /> Echo (OpenAI)</label><br/>
+      <label><input type="radio" name="voice" value="fable" /> Fable (OpenAI)</label><br/>
+      <label><input type="radio" name="voice" value="onyx" /> Onyx (OpenAI)</label><br/>
     </div>
 
     <div class="button-group">
       <button onclick="testVoice()">Test Voice</button>
     </div>
 
-    <button class="start-button" onclick="setupTutor()">Start Tutor</button>
+    <button id="startBtn" onclick="setupTutor()">Start Tutor</button>
   </div>
 
-  <script>
-    async function testVoice() {
-      const text = document.getElementById("initialText").value.trim() || "This is a test of the selected tutor voice.";
-      const voice = document.querySelector('input[name="voice"]:checked').value;
+ <script>
+  async function testVoice() {
+    const text = document.getElementById("initialText").value.trim();
+    const voice = document.querySelector('input[name="voice"]:checked')?.value || "browser";
 
-      try {
-        const res = await fetch("/tts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text, voice })
-        });
-
-        const data = await res.json?.();
-        if (data?.message === "Use browser TTS") {
-          const utterance = new SpeechSynthesisUtterance(text);
-          speechSynthesis.speak(utterance);
-        } else if (res.ok) {
-          const audio = new Audio(URL.createObjectURL(await res.blob()));
-          audio.play();
-        } else {
-          alert("TTS error: " + (data?.message || "Unknown error"));
-        }
-      } catch (err) {
-        alert("TTS error: " + err.message);
-      }
+    if (!text) {
+      alert("Please enter an initial prompt to test the voice.");
+      return;
     }
 
-    async function setupTutor() {
-      const responseStyle = document.getElementById("responseStyle").value.trim();
-      const initialText = document.getElementById("initialText").value.trim();
-      const voice = document.querySelector('input[name="voice"]:checked').value;
-
-      if (!responseStyle || !initialText) {
-        alert("Please fill out both fields.");
-        return;
-      }
-
-      try {
-        const res = await fetch("/setup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            response_style: responseStyle,
-            initial_text: initialText,
-            preferred_voice: voice
-          })
-        });
-
-        const data = await res.json();
-        if (data.success) {
-          window.location.href = "/";
-        } else {
-          alert("Setup error: " + data.message);
-        }
-      } catch (err) {
-        alert("Setup error: " + err.message);
-      }
+    if (voice === "browser") {
+      const utterance = new SpeechSynthesisUtterance(text);
+      speechSynthesis.speak(utterance);
+      return;
     }
-  </script>
+
+    try {
+      const res = await fetch("/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voice })
+      });
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.play();
+    } catch (err) {
+      alert("TTS error: " + err.message);
+    }
+  }
+</script>
+
 </body>
 </html>
