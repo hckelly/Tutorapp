@@ -20,6 +20,7 @@ os.makedirs(SESSION_DIR, exist_ok=True)
 app.config["SECRET_KEY"] = str(os.getenv("SECRET_KEY", "fallback_secret"))
 app.config["SESSION_TYPE"] = "filesystem"
 app.config["SESSION_FILE_DIR"] = SESSION_DIR
+app.config["SESSION_COOKIE_NAME"] = "session"  # ✅ Fix for Flask 2.3+
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_USE_SIGNER"] = False
 Session(app)
