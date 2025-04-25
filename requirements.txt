@@ -3,4 +3,4 @@ openai>=1.6.1
 flask-cors==3.0.10
 requests==2.31.0
 gunicorn==21.2.0
-Flask-Session @ https://github.com/roguemaster/flask-session/archive/refs/heads/session_cookie_name_fix.zip
+Flask-Session @ https://github.com/mgoral/flask-session/archive/refs/heads/fix_session_cookie_name.zip
