@@ -29,17 +29,13 @@
       margin-top: 10px;
       font-weight: bold;
     }
-    input[type="text"] {
+    input[type="text"], textarea {
       width: 100%;
       padding: 8px;
       margin-top: 5px;
       font-size: 16px;
     }
     textarea {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      font-size: 16px;
       resize: vertical;
     }
     .button-group {
@@ -76,12 +72,12 @@
 
     <label>Choose Voice:</label>
     <div>
-      <label><input type="radio" name="voice" value="browser" checked /> Lower latency browser voice</label><br/>
-      <label><input type="radio" name="voice" value="shimmer" /> Shimmer (OpenAI)</label><br/>
-      <label><input type="radio" name="voice" value="alloy" /> Alloy (OpenAI)</label><br/>
-      <label><input type="radio" name="voice" value="echo" /> Echo (OpenAI)</label><br/>
-      <label><input type="radio" name="voice" value="fable" /> Fable (OpenAI)</label><br/>
-      <label><input type="radio" name="voice" value="onyx" /> Onyx (OpenAI)</label><br/>
+      <label><input type="radio" name="voice" value="browser" checked> Lower latency browser voice</label><br/>
+      <label><input type="radio" name="voice" value="shimmer"> Shimmer (OpenAI)</label><br/>
+      <label><input type="radio" name="voice" value="alloy"> Alloy (OpenAI)</label><br/>
+      <label><input type="radio" name="voice" value="echo"> Echo (OpenAI)</label><br/>
+      <label><input type="radio" name="voice" value="fable"> Fable (OpenAI)</label><br/>
+      <label><input type="radio" name="voice" value="onyx"> Onyx (OpenAI)</label><br/>
     </div>
 
     <div class="button-group">
@@ -91,37 +87,68 @@
     <button id="startBtn" onclick="setupTutor()">Start Tutor</button>
   </div>
 
- <script>
-  async function testVoice() {
-    const text = document.getElementById("initialText").value.trim();
-    const voice = document.querySelector('input[name="voice"]:checked')?.value || "browser";
+<script>
+async function setupTutor() {
+  const responseStyle = document.getElementById("responseStyle").value.trim();
+  const initialText = document.getElementById("initialText").value.trim();
+  const preferredVoice = document.querySelector('input[name="voice"]:checked')?.value || "browser";
 
-    if (!text) {
-      alert("Please enter an initial prompt to test the voice.");
-      return;
-    }
-
-    if (voice === "browser") {
-      const utterance = new SpeechSynthesisUtterance(text);
-      speechSynthesis.speak(utterance);
-      return;
-    }
-
-    try {
-      const res = await fetch("/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voice })
-      });
-
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audio.play();
-    } catch (err) {
-      alert("TTS error: " + err.message);
-    }
+  if (!responseStyle || !initialText) {
+    alert("Please fill out both fields.");
+    return;
   }
+
+  try {
+    const res = await fetch("/setup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        response_style: responseStyle,
+        initial_text: initialText,
+        preferred_voice: preferredVoice
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      window.location.href = "/";
+    } else {
+      alert("Setup error: " + data.message);
+    }
+  } catch (err) {
+    alert("Setup error: " + err.message);
+  }
+}
+
+async function testVoice() {
+  const text = document.getElementById("initialText").value.trim();
+  const voice = document.querySelector('input[name="voice"]:checked')?.value || "browser";
+
+  if (!text) {
+    alert("Please enter an initial prompt to test the voice.");
+    return;
+  }
+
+  if (voice === "browser") {
+    const utterance = new SpeechSynthesisUtterance(text);
+    speechSynthesis.speak(utterance);
+    return;
+  }
+
+  try {
+    const res = await fetch("/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, voice })
+    });
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.play();
+  } catch (err) {
+    alert("TTS error: " + err.message);
+  }
+}
 </script>
 
 </body>

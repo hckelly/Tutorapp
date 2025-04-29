@@ -6,7 +6,7 @@
   <style>
     body {
       font-family: sans-serif;
-      max-width: 700px;
+      max-width: 600px;
       margin: 2rem auto;
       padding: 1rem;
       background: #f4f4f4;
@@ -24,24 +24,22 @@
       background: #e2f7dc;
       text-align: left;
     }
-    #reset-button {
+    #reset-btn {
       display: block;
-      margin: 2rem auto;
-      padding: 1rem 2rem;
-      font-size: 1.1rem;
-      background-color: #004080;
+      margin: 20px auto 0;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007bff;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 5px;
       cursor: pointer;
-    }
-    #reset-button:hover {
-      background-color: #0059b3;
     }
   </style>
 </head>
 <body>
   <h1>AI Tutor Session</h1>
+
   <div id="chatbox"></div>
 
   <form id="student-form">
@@ -54,7 +52,7 @@
     <button type="submit" style="padding: 0.5rem 1rem; font-size: 1rem;">Send</button>
   </form>
 
-  <button id="reset-button" onclick="resetSession()">Push for Next Challenge</button>
+  <button id="reset-btn" onclick="window.location.href='/reset'">Start New Session</button>
 
   <script>
     const chatbox = document.getElementById("chatbox");
@@ -69,34 +67,8 @@
       chatbox.scrollTop = chatbox.scrollHeight;
     }
 
-    async function speak(text) {
-      try {
-        const ttsRes = await fetch("/tts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text })
-        });
-
-        const contentType = ttsRes.headers.get("Content-Type");
-
-        if (contentType === "application/json") {
-          const json = await ttsRes.json();
-          if (json.success && json.message === "Use browser TTS") {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.rate = 1.1;
-            speechSynthesis.speak(utterance);
-            return;
-          } else {
-            throw new Error(json.message);
-          }
-        }
-
-        const blob = await ttsRes.blob();
-        const audioURL = URL.createObjectURL(blob);
-        const audio = new Audio(audioURL);
-        audio.play();
-      } catch (err) {
-        console.error("TTS fallback:", err);
+    function speak(text) {
+      if ("speechSynthesis" in window) {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = 1.1;
         speechSynthesis.speak(utterance);
@@ -138,10 +110,6 @@
         appendMessage("assistant", "Tutor Error: " + err.message);
       }
     };
-
-    function resetSession() {
-      window.location.href = "/reset";
-    }
 
     loadInitialText();
   </script>

@@ -2,13 +2,14 @@ import os
 from flask import Flask, render_template, request, jsonify, session, send_file, redirect, url_for
 from flask_cors import CORS
 from flask_session import Session
-from dotenv import load_dotenv
-from openai import OpenAI
 import traceback
-import tempfile
 
-# Load environment variables
-load_dotenv()
+# Only load dotenv locally
+if os.environ.get("RENDER") != "true":
+    from dotenv import load_dotenv
+    load_dotenv()
+
+from openai import OpenAI
 
 # Initialize Flask app
 app = Flask(__name__, template_folder="templates")
@@ -20,7 +21,7 @@ os.makedirs(SESSION_DIR, exist_ok=True)
 app.config["SECRET_KEY"] = str(os.getenv("SECRET_KEY", "fallback_secret"))
 app.config["SESSION_TYPE"] = "filesystem"
 app.config["SESSION_FILE_DIR"] = SESSION_DIR
-app.config["SESSION_COOKIE_NAME"] = "session"  # ✅ Fix for Flask 2.3+
+app.config["SESSION_COOKIE_NAME"] = "session"  # Fix for Flask 2.3+
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_USE_SIGNER"] = False
 Session(app)
@@ -114,6 +115,7 @@ def tts():
         if voice == "browser":
             return jsonify({"success": True, "message": "Use browser TTS"})
 
+        import tempfile
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio:
             client.audio.speech.create(
                 model="tts-1",
